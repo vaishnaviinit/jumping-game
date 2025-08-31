@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Platform Jumper</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        .game-container {
+            position: relative;
+            width: 400px;
+            height: 600px;
+            background: #f8f9fa;
+            border: 3px solid #333;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(45deg, #74b9ff, #0984e3);
+        }
+
+        .screen.hidden {
+            display: none;
+        }
+
+        .screen-content {
+            text-align: center;
+            color: white;
+            padding: 20px;
+        }
+
+        .game-title {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .game-over-title {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #ff6b6b;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .instructions {
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            backdrop-filter: blur(10px);
+        }
+
+        .instructions p {
+            margin: 8px 0;
+            font-size: 0.9rem;
+        }
+
+        .platform-demo {
+            display: inline-block;
+            width: 20px;
+            height: 4px;
+            background: #10B981;
+            vertical-align: middle;
+        }
+
+        .bomb-demo {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            background: #DC2626;
+            border-radius: 50%;
+            vertical-align: middle;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn--primary {
+            background: #00b894;
+            color: white;
+        }
+
+        .btn--primary:hover {
+            background: #00a085;
+            transform: translateY(-2px);
+        }
+
+        .btn--secondary {
+            background: #74b9ff;
+            color: white;
+        }
+
+        .btn--secondary:hover {
+            background: #0984e3;
+            transform: translateY(-2px);
+        }
+
+        .btn--lg {
+            padding: 15px 30px;
+            font-size: 1.2rem;
+        }
+
+        .game-ui {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 15px;
+            background: rgba(0,0,0,0.1);
+            z-index: 10;
+        }
+
+        .score-display {
+            display: flex;
+            justify-content: space-between;
+            color: white;
+            font-weight: bold;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        }
+
+        .final-score {
+            font-size: 1.5rem;
+            margin: 20px 0;
+            color: #ffeaa7;
+        }
+
+        .final-score span {
+            color: #fdcb6e;
+            font-weight: bold;
+        }
+
+        #gameCanvas {
+            display: block;
+            background: linear-gradient(to bottom, #87CEEB, #98FB98);
+        }
+
+        .mobile-controls {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 100px;
+            display: flex;
+            pointer-events: none;
+        }
+
+        .mobile-btn {
+            flex: 1;
+            pointer-events: all;
+            opacity: 0.1;
+            transition: opacity 0.2s;
+        }
+
+        .mobile-btn:active {
+            opacity: 0.3;
+            background: rgba(255,255,255,0.2);
+        }
+
+        .mobile-btn--left {
+            background: rgba(255,0,0,0.1);
+        }
+
+        .mobile-btn--right {
+            background: rgba(0,0,255,0.1);
+        }
+
+        @media (max-width: 480px) {
+            .game-container {
+                width: 100vw;
+                height: 100vh;
+                border: none;
+                border-radius: 0;
+            }
+            
+            .game-title {
+                font-size: 2rem;
+            }
+            
+            .instructions {
+                font-size: 0.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <!-- Start Screen -->
+        <div id="startScreen" class="screen">
+            <div class="screen-content">
+                <h1 class="game-title">Platform Jumper</h1>
+                <div class="instructions">
+                    <p>Use <strong>Arrow Keys</strong> or <strong>WASD</strong> to move left and right</p>
+                    <p>Jump on <span class="platform-demo"></span> platforms to climb higher</p>
+                    <p>Avoid <span class="bomb-demo"></span> red bombs!</p>
+                    <p>On mobile: Tap left/right side of screen to move</p>
+                </div>
+                <button class="btn btn--primary btn--lg" onclick="startGame()">Start Game</button>
+            </div>
+        </div>
+
+        <!-- Game Screen -->
+        <div id="gameScreen" class="screen hidden">
+            <div class="game-ui">
+                <div class="score-display">
+                    <div class="score">Score: <span id="currentScore">0</span></div>
+                    <div class="high-score">Best: <span id="highScore">0</span></div>
+                </div>
+            </div>
+            <canvas id="gameCanvas" width="400" height="600"></canvas>
+            <div class="mobile-controls">
+                <div class="mobile-btn mobile-btn--left" id="moveLeft"></div>
+                <div class="mobile-btn mobile-btn--right" id="moveRight"></div>
+            </div>
+        </div>
+
+        <!-- Game Over Screen -->
+        <div id="gameOverScreen" class="screen hidden">
+            <div class="screen-content">
+                <h2 class="game-over-title">Game Over!</h2>
+                <div class="final-score">
+                    <p>Your Score: <span id="finalScore">0</span></p>
+                    <p>Best Score: <span id="finalHighScore">0</span></p>
+                </div>
+                <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+                    <button class="btn btn--primary" onclick="startGame()">Play Again</button>
+                    <button class="btn btn--secondary" onclick="showStartScreen()">Main Menu</button>
+                </div>
+                <p style="margin-top: 20px; font-size: 0.9rem; opacity: 0.8;">Press SPACEBAR to restart</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
